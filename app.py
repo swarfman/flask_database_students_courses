@@ -1,5 +1,5 @@
 import os
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 import sqlalchemy
 from flask_migrate import Migrate
 from sqlalchemy import desc
@@ -18,19 +18,32 @@ migrate = Migrate(app, db)
 
 @app.route('/students/add', methods=["POST"])
 def add():
-    info= request.get_json() or {}
-    item= Students(first_name=info["first_name"],last_name=info["last_name"],age=info["age"],course_id=info["course_id"])
-    db.session.add(item)
-    db.session.commit()
-    return jsonify({"response": "ok"})
+    if request.method == "POST":
+        info= request.get_json() or {}
+        item= Students(first_name=info["first_name"],last_name=info["last_name"],age=info["age"],course_id=info["course_id"])
+        if info["first_name"] == "":
+            return make_response(jsonify({"error": 400, "message":"Bad Request. No first_name" }))
+        elif info["last_name"] == "":
+            return make_response(jsonify({"error": 400, "message":"Bad Request. No last_name" }))
+        elif info["age"] == "":
+            return make_response(jsonify({"error": 400, "message":"Bad Request. No age" }))
+        elif info["course_id"] == "":
+            return make_response(jsonify({"error": 400, "message":"Bad Request. No course_id" }))
+        else:
+            db.session.add(item)
+            db.session.commit()
+            return jsonify({"response": "ok"})
     
 @app.route('/course/add', methods=["POST"])
 def addCourse():
     info= request.get_json() or {}
     item= Course(name=info["name"])
-    db.session.add(item)
-    db.session.commit()
-    return jsonify({"response": "ok"})
+    if info["name"] == "":
+        return make_response(jsonify({"error": 400, "message":"Bad Request. No course name"}))
+    else:
+        db.session.add(item)
+        db.session.commit()
+        return jsonify({"response": "ok"})
 
 
 @app.route('/students')
